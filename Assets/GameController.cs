@@ -4,18 +4,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using static GoalController;
 using static AISpaceshipController;
+using TMPro;
 
 public class GameController : MonoBehaviour
 {
     public float roundLength = 300;
-
     public int shipCount = 1;
+    public int shipsCompleted;
 
-    int shipsCompleted;
+    public TextMeshProUGUI timerText;
 
     bool roundActive = false;
 
     public static EventHandler OnResetLevelEvent;
+
+    float timer;
 
     private void OnEnable()
     {
@@ -43,30 +46,36 @@ public class GameController : MonoBehaviour
             StopCoroutine(RoundTimer());
             roundActive = false;
             shipsCompleted = 0;
+            Debug.Log("Invoke OnResetLevelEvent Due to All Ships Completed");
             OnResetLevelEvent?.Invoke(this, null);
             StartCoroutine(RoundTimer());
         }
         else if (!roundActive)
         {
             shipsCompleted = 0;
+            Debug.Log("Invoke OnResetLevelEvent Due to Timer Run Out");
             OnResetLevelEvent?.Invoke(this, null);
             StartCoroutine(RoundTimer());
         }
 
-        if (Input.GetKeyDown(KeyCode.Backspace))
-        {
-            StopCoroutine(RoundTimer());
-            roundActive = false;
-            shipsCompleted = 0;
-            OnResetLevelEvent?.Invoke(this, null);
-            StartCoroutine(RoundTimer());
-        }
+    }
+
+    private void FixedUpdate()
+    {
+        timerText.text = "" + timer;
     }
 
     IEnumerator RoundTimer()
     {
         roundActive = true;
-        yield return new WaitForSeconds(roundLength);
+        timer = roundLength;
+        while (timer >= 0)
+        {
+            yield return new WaitForSeconds(1);
+            timer--;
+        }
+        
+        
         roundActive = false;
     }
 

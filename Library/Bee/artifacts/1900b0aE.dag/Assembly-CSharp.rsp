@@ -359,6 +359,7 @@
 "Assets/GoalController.cs"
 "Assets/GravityBodyController.cs"
 "Assets/NetController.cs"
+"Assets/ScoringController.cs"
 "Assets/SpaceshipController.cs"
 "Assets/TestMoveToPoint1.cs"
 "Assets/TestNet2.cs"

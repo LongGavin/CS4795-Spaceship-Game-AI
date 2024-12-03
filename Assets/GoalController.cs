@@ -9,6 +9,7 @@ public class GoalController : MonoBehaviour
 
     public void InvokeGoalReached()
     {
+        Debug.Log("Invoke OnReachGoalEvent");
         OnReachGoalEvent?.Invoke(this, null);
     }
 }

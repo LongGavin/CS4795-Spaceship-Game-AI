@@ -72,20 +72,20 @@ public class TestNet2
     {
         for (int i = 0; i < layers; i++)
         {
-            if (i == 0)
+            
+            for (int j = 0; j < nodesPerLayer; j++)
             {
-                for (int j = 0; j < inputSize; j++)
+                if (i == 0)
                 {
                     Array.Copy(w[i][j], weights[i][j], inputSize);
                 }
-            }
-            else
-            {
-                for (int j = 0; j < nodesPerLayer; j++)
+                else
                 {
                     Array.Copy(w[i][j], weights[i][j], nodesPerLayer);
                 }
+                    
             }
+            
             
             
             Array.Copy(b[i], biases[i], nodesPerLayer);

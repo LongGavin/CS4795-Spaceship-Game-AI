@@ -29,7 +29,11 @@ public class AISpaceshipController : MonoBehaviour
     Vector3 gravVel;
     int gravIndex = -1;
     GravityBodyController gravControl;
-    bool isEnabled = true;
+
+
+    public bool isEnabled = true;
+    public bool reachedGoal = false;
+    public bool shipCrashed = false;
 
     private void OnEnable()
     {
@@ -65,6 +69,13 @@ public class AISpaceshipController : MonoBehaviour
         if (!isEnabled)
         {
             transform.position = Vector3.one * 10000;
+        }
+        else if (Vector3.Distance(transform.position, Vector3.zero) > 3000)
+        {
+            Debug.Log("Invoke OnShipDestroyed Due to Ship Too Far");
+            OnShipDestroyed?.Invoke(this, null);
+            shipCrashed = true;
+            isEnabled = false;
         }
     }
 
@@ -208,7 +219,9 @@ public class AISpaceshipController : MonoBehaviour
             {
                 Debug.Log("Player Entered Goal Trigger");
                 other.gameObject.GetComponent<GoalController>().InvokeGoalReached();
+                reachedGoal = true;
                 isEnabled = false;
+
             }
         }
         
@@ -216,8 +229,9 @@ public class AISpaceshipController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log("oof");
+        Debug.Log("Invoke OnShipDestroyed Due to Collision");
         OnShipDestroyed?.Invoke(this, null);
+        shipCrashed = true;
         isEnabled = false;
     }
 }
