@@ -6,12 +6,15 @@ using static GameController;
 
 public class ScoringController : MonoBehaviour
 {
+    public bool scoringV2 = true;
+
     public int netCount = 10;
     public int winnerCount = 3;
     public float mutationRate = 0.01f;
 
     public NetController[] nets;
     public Transform moon;
+    public LineRenderer line;
 
     public float[] scores;
 
@@ -71,39 +74,61 @@ public class ScoringController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        Vector3[] path = new Vector3[line.positionCount];
+        line.GetPositions(path);
+
         for (int i = 0; i < nets.Length; i++)
         {
             if (nets[i].controller.isEnabled)
             {
-                float newDistance = Vector3.Distance(nets[i].transform.position, moon.position);
-                float distanceDiff = lastDistance[i] - newDistance;
-                lastDistance[i] = newDistance;
-
-                if ( distanceDiff <= 0)
+                if (scoringV2)
                 {
-                    distanceDiff *= distancePenalty;
-                }
+                    List<float> distances = new List<float>();
 
-                Vector3 moonDir = moon.position - nets[i].transform.position;
-                float angle = Vector3.Angle(nets[i].transform.forward, moonDir);
-                float angleMod = 0;
-                if (angle < 15 && nets[i].controller.throttle != 0)
-                {
-                    angleMod = anglePoints;
-                }
+                    for (int j = 0; j < line.positionCount; j++)
+                    {
+                        float dist = Vector3.Distance(nets[i].transform.position, path[j]);
 
-                float timeMod = 0;
-                if (pointTimer <= 0)
-                {
-                    timeMod = timePenalty;
-                    pointTimer = 1f;
+                        distances.Add(dist);
+                    }
+
+                    distances.Sort();
+
+
                 }
                 else
                 {
-                    pointTimer -= Time.fixedDeltaTime;
-                }
+                    float newDistance = Vector3.Distance(nets[i].transform.position, moon.position);
+                    float distanceDiff = lastDistance[i] - newDistance;
+                    lastDistance[i] = newDistance;
 
-                scores[i] += distanceDiff + angleMod - timeMod;
+                    if (distanceDiff <= 0)
+                    {
+                        distanceDiff *= distancePenalty;
+                    }
+
+                    Vector3 moonDir = moon.position - nets[i].transform.position;
+                    float angle = Vector3.Angle(nets[i].transform.forward, moonDir);
+                    float angleMod = 0;
+                    if (angle < 15 && nets[i].controller.throttle != 0)
+                    {
+                        angleMod = anglePoints;
+                    }
+
+                    float timeMod = 0;
+                    if (pointTimer <= 0)
+                    {
+                        timeMod = timePenalty;
+                        pointTimer = 1f;
+                    }
+                    else
+                    {
+                        pointTimer -= Time.fixedDeltaTime;
+                    }
+
+                    scores[i] += distanceDiff + angleMod - timeMod;
+                }
+                
             }
             
         }
