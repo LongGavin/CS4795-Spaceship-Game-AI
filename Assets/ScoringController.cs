@@ -27,7 +27,16 @@ public class ScoringController : MonoBehaviour
     public float crashPenalty = 10000f;
     public float timeoutPenalty = 10000f;
 
+    public float distanceTolerance = 10f;
+    public float distanceReward = 0.5f;
+    public float maxDistPenalty = 100f;
+
+    public float moonBonusDist = 500f;
+
     float pointTimer = 1;
+
+    bool[] hasLeftPath;
+    bool[] hasMoonBonus;
 
     struct FinalScores
     {
@@ -64,11 +73,15 @@ public class ScoringController : MonoBehaviour
     {
         scores = new float[netCount];
         lastDistance = new float[netCount];
+        hasMoonBonus = new bool[netCount];
 
         for (int i = 0; i < netCount; i++)
         {
             lastDistance[i] = Vector3.Distance(nets[i].transform.position, moon.position);
+            hasMoonBonus[i] = true;
         }
+        hasLeftPath = new bool[netCount];
+        
     }
 
     // Update is called once per frame
@@ -85,16 +98,55 @@ public class ScoringController : MonoBehaviour
                 {
                     List<float> distances = new List<float>();
 
+                    float lastDist = Vector3.Distance(nets[i].transform.position, path[0]);
                     for (int j = 0; j < line.positionCount; j++)
                     {
                         float dist = Vector3.Distance(nets[i].transform.position, path[j]);
 
+                        if (lastDist < dist)
+                        {
+                            break;
+                        }
                         distances.Add(dist);
+
+                        
                     }
 
                     distances.Sort();
 
+                    if (!hasLeftPath[i] && distances[0] < distanceTolerance)
+                    {
+                        scores[i] += Mathf.Lerp(distanceReward, 0, distances[0] / distanceTolerance);
 
+                        Vector3 moonDir = moon.position - nets[i].transform.position;
+                        float angle = Vector3.Angle(nets[i].transform.forward, moonDir);
+                        float angleMod = 0;
+                        if (angle < 15)
+                        {
+                            angleMod = anglePoints;
+                        }
+                        scores[i] += angleMod;
+                    }
+                    else if (Vector3.Distance(nets[i].transform.position, moon.position) > lastDistance[i])
+                    {
+                        hasLeftPath[i] = true;
+                        hasMoonBonus[i] = false;
+                        scores[i] -= 0.05f;
+                    }
+                    else
+                    {
+                        hasLeftPath[i] = true;
+                        scores[i] -= 0.05f;
+                        //scores[i] -= Mathf.Lerp(0, 10, (distances[0] - distanceTolerance) / maxDistPenalty);
+                    }
+
+                    if (hasMoonBonus[i] && Vector3.Distance(nets[i].transform.position, moon.position) < moonBonusDist)
+                    {
+                        float d = Vector3.Distance(nets[i].transform.position, moon.position);
+                        scores[i] += Mathf.Lerp(0.5f, 0f, (d / moonBonusDist));
+                    }
+
+                    lastDistance[i] = Vector3.Distance(nets[i].transform.position, moon.position);
                 }
                 else
                 {
@@ -165,6 +217,8 @@ public class ScoringController : MonoBehaviour
 
             fin.Add(f);
             scores[i] = 0;
+            hasLeftPath[i] = false;
+            hasMoonBonus[i] = true;
         }
 
 

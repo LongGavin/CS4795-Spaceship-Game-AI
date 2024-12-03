@@ -81,7 +81,7 @@ public class AISpaceshipController : MonoBehaviour
 
     void ResetToStart(object sender, EventArgs args)
     {
-        Debug.Log("Reset Ship");
+        //Debug.Log("Reset Ship");
         isEnabled = true;
         transform.position = initialPosition;
         transform.eulerAngles = initialRotation;
