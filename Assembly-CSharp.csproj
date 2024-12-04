@@ -65,7 +65,9 @@
     <Compile Include="Assets\GravityBodyController.cs" />
     <Compile Include="Assets\CameraControllerV2.cs" />
     <Compile Include="Assets\ScoringController.cs" />
+    <Compile Include="Assets\SaveNetwork.cs" />
     <Compile Include="Assets\TestMoveToPoint1.cs" />
+    <Compile Include="Assets\Network.cs" />
     <Compile Include="Assets\NetController.cs" />
     <Compile Include="Assets\GoalController.cs" />
     <Compile Include="Assets\AISpaceshipController.cs" />

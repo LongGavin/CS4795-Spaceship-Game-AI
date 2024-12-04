@@ -20,7 +20,7 @@ public class NetController : MonoBehaviour
     public AISpaceshipController controller;
 
     // Start is called before the first frame update
-    void Start()
+    public void Initialize()
     {
         net = new TestNet2();
         net.layers = layerCount;
@@ -28,6 +28,61 @@ public class NetController : MonoBehaviour
         net.inputSize = inputCount;
         net.outputSize = outputCount;
         net.Initialize();
+    }
+
+    public void Initialize(NetData data)
+    {
+        net = new TestNet2();
+        net.layers = layerCount;
+        net.nodesPerLayer = nodeCount;
+        net.inputSize = inputCount;
+        net.outputSize = outputCount;
+
+        float[][][] weights;
+        float[][] biases;
+        float[] outputBiases;
+        float[][] outputWeights;
+
+        weights = new float[data.layers][][];
+        biases = new float[data.layers][];
+
+        for (int i = 0; i < data.layers; i++)
+        {
+            weights[i] = new float[data.nodesPerLayer][];
+
+            for (int j = 0; j < data.nodesPerLayer; j++)
+            {
+                if (i == 0)
+                {
+                    weights[i][j] = new float[data.inputSize];
+                    //Debug.Log(weights[i][j].Length + " : " + data.weights[i][j].Length);
+                    Array.Copy(data.weights[i][j], weights[i][j], data.inputSize);
+                }
+                else
+                {
+                    weights[i][j] = new float[data.nodesPerLayer];
+                    Array.Copy(data.weights[i][j], weights[i][j], data.nodesPerLayer);
+                }
+
+            }
+
+
+            biases[i] = new float[data.nodesPerLayer];
+            Array.Copy(data.biases[i], biases[i], data.nodesPerLayer);
+        }
+
+        outputBiases = new float[data.outputSize];
+        outputWeights = new float[data.outputSize][];
+
+        Array.Copy(data.outputBiases, outputBiases, data.outputSize);
+
+        for (int i = 0; i < data.outputSize; i++)
+        {
+            outputWeights[i] = new float[data.nodesPerLayer];
+            Array.Copy(data.outputWeights[i], outputWeights[i], data.nodesPerLayer);
+        }
+
+        net.InitializeWithValues(weights, biases, outputWeights, outputBiases);
     }
 
     // Update is called once per frame

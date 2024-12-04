@@ -3055,6 +3055,8 @@ MonoBehaviour:
   distanceReward: 1
   maxDistPenalty: 1000
   moonBonusDist: 200
+  saveOnClose: 0
+  loadSavedGroup: 1
 --- !u!1 &768903320
 GameObject:
   m_ObjectHideFlags: 0

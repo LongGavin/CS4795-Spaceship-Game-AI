@@ -20,6 +20,9 @@ public class GameController : MonoBehaviour
 
     float timer;
 
+    public float timePassed;
+    public int generation;
+
     private void OnEnable()
     {
         OnReachGoalEvent += IncrementCompletionCounter;
@@ -67,12 +70,15 @@ public class GameController : MonoBehaviour
 
     IEnumerator RoundTimer()
     {
+        Debug.Log("Generation: " + generation + ", " + timePassed + " seconds passed");
         roundActive = true;
         timer = roundLength;
+        generation++;
         while (timer >= 0)
         {
             yield return new WaitForSeconds(1);
             timer--;
+            timePassed += 1;
         }
         
         

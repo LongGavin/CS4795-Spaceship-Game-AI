@@ -70,17 +70,27 @@ public class TestNet2
 
     public void InitializeWithValues(float[][][] w, float[][] b, float[][] oW, float[] oB)
     {
+        outputs = new float[outputSize];
+        inputs = new float[inputSize];
+        weights = new float[layers][][];
+        biases = new float[layers][];
+        outputWeights = new float[outputSize][];
+        outputBiases = new float[outputSize];
+
         for (int i = 0; i < layers; i++)
         {
-            
+            weights[i] = new float[nodesPerLayer][];
+            biases[i] = new float[nodesPerLayer];
             for (int j = 0; j < nodesPerLayer; j++)
             {
                 if (i == 0)
                 {
+                    weights[i][j] = new float[inputSize];
                     Array.Copy(w[i][j], weights[i][j], inputSize);
                 }
                 else
                 {
+                    weights[i][j] = new float[nodesPerLayer];
                     Array.Copy(w[i][j], weights[i][j], nodesPerLayer);
                 }
                     
@@ -96,6 +106,7 @@ public class TestNet2
 
         for (int i = 0; i < outputSize; i++)
         {
+            outputWeights[i] = new float[nodesPerLayer];
             Array.Copy(oW[i], outputWeights[i], nodesPerLayer);
         }
     }

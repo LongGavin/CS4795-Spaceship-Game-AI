@@ -33,10 +33,15 @@ public class ScoringController : MonoBehaviour
 
     public float moonBonusDist = 500f;
 
+    public bool saveOnClose;
+    public bool loadSavedGroup;
+
     float pointTimer = 1;
 
     bool[] hasLeftPath;
     bool[] hasMoonBonus;
+
+    bool[] hasReachedGoal;
 
     struct FinalScores
     {
@@ -74,13 +79,31 @@ public class ScoringController : MonoBehaviour
         scores = new float[netCount];
         lastDistance = new float[netCount];
         hasMoonBonus = new bool[netCount];
+        hasReachedGoal = new bool[netCount];
+        List<NetData> nDataList = new List<NetData>();
+        if (loadSavedGroup)
+        {
+            NetworkList nList = SaveNetwork.LoadNetList("SaveData");
+            nDataList = SaveNetwork.ConvertNetListToWinList(nList);
+        }
 
         for (int i = 0; i < netCount; i++)
         {
             lastDistance[i] = Vector3.Distance(nets[i].transform.position, moon.position);
             hasMoonBonus[i] = true;
+            if (loadSavedGroup)
+            {
+                nets[i].Initialize(nDataList[i]);
+            }
+            else
+            {
+                nets[i].Initialize();
+            }
+            
         }
         hasLeftPath = new bool[netCount];
+
+        
         
     }
 
@@ -116,7 +139,7 @@ public class ScoringController : MonoBehaviour
 
                     if (!hasLeftPath[i] && distances[0] < distanceTolerance)
                     {
-                        scores[i] += Mathf.Lerp(distanceReward, 0, distances[0] / distanceTolerance);
+                        scores[i] += Mathf.Pow(Mathf.Lerp(distanceReward, 0, distances[0] / distanceTolerance), 2);
 
                         Vector3 moonDir = moon.position - nets[i].transform.position;
                         float angle = Vector3.Angle(nets[i].transform.forward, moonDir);
@@ -182,6 +205,10 @@ public class ScoringController : MonoBehaviour
                 }
                 
             }
+            if (nets[i].controller.reachedGoal)
+            {
+                hasReachedGoal[i] = true;
+            }
             
         }
     }
@@ -219,6 +246,7 @@ public class ScoringController : MonoBehaviour
             scores[i] = 0;
             hasLeftPath[i] = false;
             hasMoonBonus[i] = true;
+            
         }
 
 
@@ -256,14 +284,14 @@ public class ScoringController : MonoBehaviour
                 }
                 d.biases[j] = new float[nets[id].net.nodesPerLayer];
 
-                Array.Copy(nets[id].net.biases[j], d.biases[j], nets[id].net.layers);
+                Array.Copy(nets[id].net.biases[j], d.biases[j], nets[id].net.nodesPerLayer);
             }
 
             d.outputWeights = new float[nets[id].net.outputSize][];
             for (int j = 0; j < nets[id].net.outputSize; j++)
             {
                 d.outputWeights[j] = new float[nets[id].net.nodesPerLayer];
-                Array.Copy(nets[id].net.outputWeights[j], d.outputWeights[j], nets[id].net.outputSize);
+                Array.Copy(nets[id].net.outputWeights[j], d.outputWeights[j], nets[id].net.nodesPerLayer);
             }
 
             d.outputBiases = new float[nets[id].net.outputSize];
@@ -277,7 +305,8 @@ public class ScoringController : MonoBehaviour
 
             winners.Add(d);
         }
-
+        float fitness = 0;
+        float winRate = 0;
         for (int i = 0; i < netCount; i++)
         {
             int r = UnityEngine.Random.Range(0, winnerCount);
@@ -286,6 +315,82 @@ public class ScoringController : MonoBehaviour
 
             lastDistance[i] = Vector3.Distance(nets[i].controller.initialPosition, moon.position);
             scores[i] = 0;
+
+            fitness += fin[i].score;
+            if (hasReachedGoal[i])
+            {
+                winRate++;
+            }
+            hasReachedGoal[i] = false;
         }
+        fitness = fitness / fin.Count;
+        winRate = winRate / fin.Count;
+
+        Debug.Log("Average Fitness = " + fitness + ", Win Rate = " + winRate * 100 + "%");
+    }
+
+    private void OnDestroy()
+    {
+        if (saveOnClose)
+        {
+            SaveNet();
+        }
+    }
+
+    void SaveNet()
+    {
+        List<NetData> netList = new List<NetData>();
+
+        //copy network values into a list
+        for (int i = 0; i < netCount; i++)
+        {
+            NetData d = new NetData();
+
+            int id = i;
+
+            d.weights = new float[nets[id].net.layers][][];
+            d.biases = new float[nets[id].net.layers][];
+
+            for (int j = 0; j < nets[id].net.layers; j++)
+            {
+                d.weights[j] = new float[nets[id].net.nodesPerLayer][];
+                for (int k = 0; k < nets[id].net.nodesPerLayer; k++)
+                {
+                    if (j == 0)
+                    {
+                        d.weights[j][k] = new float[nets[id].net.inputSize];
+                        Array.Copy(nets[id].net.weights[j][k], d.weights[j][k], nets[id].net.inputSize);
+                    }
+                    else
+                    {
+                        d.weights[j][k] = new float[nets[id].net.nodesPerLayer];
+                        Array.Copy(nets[id].net.weights[j][k], d.weights[j][k], nets[id].net.nodesPerLayer);
+                    }
+                }
+                d.biases[j] = new float[nets[id].net.nodesPerLayer];
+
+                Array.Copy(nets[id].net.biases[j], d.biases[j], nets[id].net.nodesPerLayer);
+            }
+
+            d.outputWeights = new float[nets[id].net.outputSize][];
+            for (int j = 0; j < nets[id].net.outputSize; j++)
+            {
+                d.outputWeights[j] = new float[nets[id].net.nodesPerLayer];
+                Array.Copy(nets[id].net.outputWeights[j], d.outputWeights[j], nets[id].net.nodesPerLayer);
+            }
+
+            d.outputBiases = new float[nets[id].net.outputSize];
+
+            Array.Copy(nets[id].net.outputBiases, d.outputBiases, nets[id].net.outputSize);
+
+            d.layers = nets[id].net.layers;
+            d.nodesPerLayer = nets[id].net.nodesPerLayer;
+            d.outputSize = nets[id].net.outputSize;
+            d.inputSize = nets[id].net.inputSize;
+
+            netList.Add(d);
+        }
+
+        SaveNetwork.SaveNetList(netList.ToArray(), "SaveData");
     }
 }
